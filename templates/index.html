@@ -1,0 +1,933 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Birthday Wishes — BIT Admin</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0d0d0f;--surface:#16161a;--surface2:#1e1e24;--border:#2a2a34;
+  --accent:#f97316;--accent2:#fbbf24;--text:#f0eff4;--muted:#8885a0;
+  --green:#22c55e;--red:#f87171;--blue:#60a5fa;
+  --radius:14px;--sidebar:220px;
+}
+body{background:var(--bg);color:var(--text);font-family:'Outfit',sans-serif;font-size:15px;min-height:100vh}
+
+/* ═══ AUTH OVERLAY ═══ */
+#auth-overlay{
+  position:fixed;inset:0;z-index:9999;
+  background:radial-gradient(ellipse at 30% 60%,rgba(249,115,22,.12) 0%,transparent 60%),
+             radial-gradient(ellipse at 75% 20%,rgba(251,191,36,.08) 0%,transparent 50%),#0d0d0f;
+  display:flex;align-items:center;justify-content:center;padding:20px;
+}
+.auth-box{
+  background:var(--surface);border:1px solid var(--border);border-radius:20px;
+  padding:44px 42px 38px;width:100%;max-width:430px;
+  box-shadow:0 24px 80px rgba(0,0,0,.5),0 0 0 1px rgba(249,115,22,.08);
+  animation:authDrop .45s cubic-bezier(.22,1,.36,1);
+}
+@keyframes authDrop{from{opacity:0;transform:translateY(32px) scale(.97)}to{opacity:1;transform:translateY(0) scale(1)}}
+.auth-brand{text-align:center;margin-bottom:32px}
+.auth-brand .emoji{font-size:44px;display:block;margin-bottom:12px;animation:floatCake 3s ease-in-out infinite}
+@keyframes floatCake{0%,100%{transform:translateY(0) rotate(-4deg)}50%{transform:translateY(-8px) rotate(4deg)}}
+.auth-brand h1{font-family:'Cormorant Garamond',serif;font-size:28px;font-weight:700;letter-spacing:-.02em}
+.auth-brand p{font-size:13px;color:var(--muted);margin-top:4px}
+
+.step-track{display:flex;align-items:center;margin-bottom:24px}
+.step-node{width:28px;height:28px;border-radius:50%;background:var(--surface2);border:2px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:11.5px;font-weight:700;color:var(--muted);transition:all .3s;flex-shrink:0;position:relative;z-index:1}
+.step-node.active{background:var(--accent);border-color:var(--accent);color:#000;box-shadow:0 0 0 4px rgba(249,115,22,.15)}
+.step-node.done{background:var(--green);border-color:var(--green);color:#000}
+.step-line{flex:1;height:2px;background:var(--border);transition:background .3s}
+.step-line.done{background:var(--green)}
+.fg{margin-bottom:16px}
+.fg label{display:block;font-size:11.5px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;margin-bottom:7px}
+.fg label .hint{font-weight:400;font-size:11px;color:#504e60;text-transform:none;letter-spacing:0;margin-left:4px}
+.inp-wrap{position:relative}
+.inp-wrap input{width:100%;padding:11px 42px 11px 14px;background:var(--surface2);border:1.5px solid var(--border);border-radius:9px;color:var(--text);font-family:'Outfit',sans-serif;font-size:14px;outline:none;transition:border-color .2s,box-shadow .2s}
+.inp-wrap input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(249,115,22,.1)}
+.inp-wrap input.ok{border-color:var(--green)}
+.inp-wrap input.err{border-color:var(--red)}
+.inp-icon{position:absolute;right:13px;top:50%;transform:translateY(-50%);font-size:14px;pointer-events:none;opacity:0;transition:opacity .2s}
+.inp-wrap input.ok~.inp-icon.v{opacity:1}
+.inp-wrap input.err~.inp-icon.x{opacity:1}
+.pw-eye{position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;font-size:15px;color:var(--muted);padding:0;z-index:2}
+.pw-bars{display:flex;gap:3px;margin-top:6px}
+.pw-bar{flex:1;height:3px;border-radius:2px;background:var(--border);transition:background .3s}
+.pw-bar.w{background:var(--red)}.pw-bar.m{background:var(--accent2)}.pw-bar.s{background:var(--green)}
+.pw-hint{font-size:11px;color:var(--muted);margin-top:4px}
+.ferr{font-size:11.5px;color:var(--red);margin-top:4px;display:none}
+.ferr.show{display:block;animation:fadeIn .2s}
+@keyframes fadeIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
+.callout{background:rgba(96,165,250,.07);border:1px solid rgba(96,165,250,.18);border-radius:9px;padding:12px 14px;font-size:12.5px;color:var(--blue);line-height:1.55;margin-bottom:16px}
+.callout strong{display:block;margin-bottom:3px;font-size:13px}
+.review-box{background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:14px 16px;font-size:13.5px;line-height:2;margin-bottom:16px}
+.review-box .rv{color:var(--muted)}.review-box .rv span{color:var(--text);font-weight:500}
+.check-row{display:flex;align-items:flex-start;gap:10px;margin-bottom:18px}
+.check-row input[type=checkbox]{width:16px;height:16px;accent-color:var(--accent);margin-top:3px;flex-shrink:0}
+.check-row label{font-size:13px;color:var(--muted);line-height:1.5}
+.btn-auth{width:100%;padding:13px;border:none;border-radius:10px;font-family:'Outfit',sans-serif;font-size:14.5px;font-weight:700;cursor:pointer;transition:all .2s;margin-top:4px;background:var(--accent);color:#000;box-shadow:0 4px 18px rgba(249,115,22,.3)}
+.btn-auth:hover{background:#ea6c0a;transform:translateY(-1px)}
+.btn-auth:disabled{opacity:.45;cursor:not-allowed;transform:none}
+.btn-back{width:100%;padding:11px;border:1.5px solid var(--border);border-radius:10px;font-family:'Outfit',sans-serif;font-size:13.5px;font-weight:600;cursor:pointer;transition:all .2s;background:none;color:var(--muted);margin-top:8px}
+.btn-back:hover{border-color:var(--accent);color:var(--accent)}
+.auth-msg{margin-top:14px;padding:11px 14px;border-radius:9px;font-size:13px;text-align:center;display:none;animation:fadeIn .2s}
+.auth-msg.ok{background:rgba(34,197,94,.1);color:var(--green);border:1px solid rgba(34,197,94,.3)}
+.auth-msg.bad{background:rgba(248,113,113,.1);color:var(--red);border:1px solid rgba(248,113,113,.3)}
+.signup-step{display:none;animation:fadeIn .3s ease}
+.signup-step.active{display:block}
+.step-title{font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:600;color:var(--text);margin-bottom:16px}
+
+/* ═══ APP SHELL ═══ */
+#app-shell{display:none}
+.sidebar{width:var(--sidebar);background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;padding:24px 0;position:fixed;top:0;left:0;bottom:0;z-index:10}
+.sidebar-logo{padding:0 20px 24px;font-family:'Cormorant Garamond',serif;font-size:18px;font-weight:700;border-bottom:1px solid var(--border);margin-bottom:14px}
+.sidebar-logo span{color:var(--accent)}
+.sidebar-user{padding:8px 16px 20px;font-size:12px;color:var(--muted);border-bottom:1px solid var(--border);margin-bottom:10px}
+.sidebar-user strong{display:block;color:var(--text);font-size:13px;margin-bottom:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.nav-item{display:flex;align-items:center;gap:10px;padding:10px 20px;color:var(--muted);cursor:pointer;border-left:3px solid transparent;transition:all .15s;font-size:14px;font-weight:500;text-decoration:none}
+.nav-item:hover{background:var(--surface2);color:var(--text)}
+.nav-item.active{color:var(--accent);border-left-color:var(--accent);background:rgba(249,115,22,.08)}
+.nav-icon{font-size:17px;width:22px;text-align:center}
+.sidebar-bottom{margin-top:auto;padding:16px 20px;border-top:1px solid var(--border)}
+.btn-signout{width:100%;padding:9px;background:rgba(248,113,113,.1);border:1px solid rgba(248,113,113,.25);border-radius:8px;color:var(--red);font-family:'Outfit',sans-serif;font-size:13px;font-weight:600;cursor:pointer;transition:all .2s}
+.btn-signout:hover{background:rgba(248,113,113,.2)}
+.main{margin-left:var(--sidebar);flex:1;padding:32px;max-width:calc(100% - var(--sidebar))}
+.page{display:none}
+.page.active{display:block;animation:fadeIn .25s}
+.page-header{margin-bottom:26px}
+.page-header h1{font-family:'Cormorant Garamond',serif;font-size:28px;font-weight:700;margin-bottom:4px;letter-spacing:-.02em}
+.page-header p{color:var(--muted);font-size:13.5px}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:24px;margin-bottom:20px}
+.card-title{font-family:'Cormorant Garamond',serif;font-size:16px;font-weight:700;margin-bottom:16px;display:flex;align-items:center;gap:8px}
+.ar-badge{margin-left:auto;display:flex;align-items:center;gap:6px;font-size:11.5px;font-weight:600;color:var(--green);background:rgba(34,197,94,.1);padding:3px 10px;border-radius:100px;border:1px solid rgba(34,197,94,.25)}
+.ar-dot{width:7px;height:7px;background:var(--green);border-radius:50%;animation:pulse 1.5s ease-in-out infinite}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.3;transform:scale(.6)}}
+.stat-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:14px;margin-bottom:24px}
+.stat{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:18px 20px}
+.stat-val{font-family:'Cormorant Garamond',serif;font-size:34px;font-weight:700;color:var(--accent)}
+.stat-lbl{font-size:11.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-top:2px}
+.btn{padding:9px 20px;border-radius:8px;border:none;cursor:pointer;font-family:'Outfit',sans-serif;font-size:14px;font-weight:500;transition:all .15s}
+.btn-primary{background:var(--accent);color:#000;font-weight:700}
+.btn-primary:hover{background:#ea6c0a}
+.btn-secondary{background:var(--surface2);color:var(--text);border:1px solid var(--border)}
+.btn-secondary:hover{border-color:var(--accent);color:var(--accent)}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+.btn-row{display:flex;gap:10px;flex-wrap:wrap;margin-top:16px}
+.table-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:14px}
+th{text-align:left;padding:10px 12px;font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);border-bottom:1px solid var(--border)}
+td{padding:10px 12px;border-bottom:1px solid var(--border)}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:var(--surface2)}
+.badge{display:inline-block;padding:2px 10px;border-radius:100px;font-size:12px;font-weight:500}
+.badge-green{background:#0f2a0f;color:var(--green);border:1px solid #1e3e1e}
+.badge-red{background:#2a0f0f;color:var(--red);border:1px solid #3e1e1e}
+.badge-gray{background:var(--surface2);color:var(--muted);border:1px solid var(--border)}
+.dropzone{border:2px dashed var(--border);border-radius:var(--radius);padding:40px;text-align:center;cursor:pointer;transition:all .2s;color:var(--muted)}
+.dropzone:hover,.dropzone.drag-over{border-color:var(--accent);color:var(--text);background:rgba(249,115,22,.05)}
+.dropzone .dz-icon{font-size:36px;margin-bottom:10px}
+.dropzone p{font-size:14px}
+.dropzone small{font-size:12px;color:var(--muted);margin-top:6px;display:block}
+.form-group{margin-bottom:18px}
+.form-group label{display:block;font-size:13px;font-weight:500;margin-bottom:6px;color:var(--muted)}
+.form-group input,.form-group select,.form-group textarea{width:100%;max-width:420px;padding:9px 14px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'Outfit',sans-serif;font-size:14px;outline:none;transition:border-color .15s}
+.form-group input:focus,.form-group select:focus,.form-group textarea:focus{border-color:var(--accent)}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media(max-width:600px){.form-row{grid-template-columns:1fr}}
+.toggle-row{display:flex;align-items:center;gap:12px}
+.toggle{width:42px;height:24px;background:var(--border);border-radius:100px;position:relative;cursor:pointer;transition:background .2s;flex-shrink:0}
+.toggle.on{background:var(--green)}
+.toggle::after{content:'';position:absolute;top:3px;left:3px;width:18px;height:18px;background:white;border-radius:50%;transition:transform .2s}
+.toggle.on::after{transform:translateX(18px)}
+.progress-bar{height:6px;background:var(--surface2);border-radius:100px;overflow:hidden;margin-top:10px}
+.progress-fill{height:100%;background:linear-gradient(90deg,var(--accent),var(--accent2));border-radius:100px;transition:width .4s ease;width:0%}
+.log-viewer{background:#0a0a0c;border:1px solid var(--border);border-radius:10px;padding:16px;font-family:'JetBrains Mono',monospace;font-size:12px;line-height:1.7;height:320px;overflow-y:auto;color:#a0a0b0}
+.log-viewer .log-sent{color:var(--green)}.log-viewer .log-err{color:var(--red)}.log-viewer .log-warn{color:var(--accent2)}.log-viewer .log-info{color:var(--blue)}
+#toast{position:fixed;bottom:24px;right:24px;padding:12px 20px;border-radius:10px;font-size:14px;font-weight:500;display:none;z-index:9998;animation:slideUp .3s ease}
+#toast.show{display:block}
+#toast.success{background:#0f2a0f;color:var(--green);border:1px solid #1e3e1e}
+#toast.error{background:#2a0f0f;color:var(--red);border:1px solid #3e1e1e}
+#toast.info{background:#0f1e2a;color:var(--blue);border:1px solid #1e2e3e}
+@keyframes slideUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+
+/* ═══ CARD PREVIEW MODAL ═══ */
+.modal-bg{display:none;position:fixed;inset:0;z-index:5000;background:rgba(0,0,0,.75);backdrop-filter:blur(6px);align-items:center;justify-content:center;padding:20px}
+.modal-bg.open{display:flex}
+.modal-box{background:var(--surface);border:1px solid var(--border);border-radius:20px;width:100%;max-width:780px;max-height:92vh;overflow-y:auto;box-shadow:0 32px 80px rgba(0,0,0,.6);animation:authDrop .35s cubic-bezier(.22,1,.36,1)}
+.modal-header{display:flex;align-items:center;padding:20px 24px 16px;border-bottom:1px solid var(--border);position:sticky;top:0;background:var(--surface);z-index:1}
+.modal-header h2{font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:700}
+.modal-close{margin-left:auto;background:var(--surface2);border:1px solid var(--border);color:var(--muted);border-radius:8px;padding:5px 12px;cursor:pointer;font-size:18px;transition:all .15s}
+.modal-close:hover{color:var(--red);border-color:var(--red)}
+.modal-body{padding:24px}
+.preview-toolbar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:18px}
+.preview-select{flex:1;min-width:200px;padding:9px 14px;background:var(--surface2);border:1.5px solid var(--border);border-radius:8px;color:var(--text);font-family:'Outfit',sans-serif;font-size:14px;outline:none}
+.preview-select:focus{border-color:var(--accent)}
+.preview-frame-wrap{border-radius:12px;overflow:hidden;border:1px solid var(--border);background:#f6e3b4;position:relative;height:520px}
+.preview-frame-wrap iframe{width:100%;height:100%;border:none;display:block;transform-origin:top left}
+.preview-spinner{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;background:#f6e3b4;font-size:13px;color:#7b3f00;font-weight:500}
+.spinner-ring{width:36px;height:36px;border:3px solid rgba(123,63,0,.2);border-top-color:#c8962e;border-radius:50%;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.preview-chip{display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:6px;background:rgba(249,115,22,.1);border:1px solid rgba(249,115,22,.25);color:var(--accent);font-size:12px;font-weight:600;cursor:pointer;transition:all .15s}
+.preview-chip:hover{background:rgba(249,115,22,.2)}
+@media(max-width:700px){.sidebar{width:56px}.sidebar-logo,.nav-item span,.sidebar-user,.sidebar-bottom{display:none}.main{margin-left:56px;max-width:calc(100% - 56px);padding:20px 14px}}
+</style>
+</head>
+<body>
+
+<!-- ══ AUTH OVERLAY ══ -->
+<div id="auth-overlay">
+  <div class="auth-box">
+    <div class="auth-brand">
+      <span class="emoji">🎂</span>
+      <h1>Birthday Wishes</h1>
+      <p>Bannari Amman Institute of Technology</p>
+    </div>
+    <div class="fg">
+      <label>Username</label>
+      <div class="inp-wrap">
+        <input type="text" id="l-user" placeholder="BIT" onkeydown="if(event.key==='Enter')doLogin()">
+      </div>
+    </div>
+    <div class="fg">
+      <label>Password</label>
+      <div class="inp-wrap">
+        <input type="password" id="l-pass" placeholder="••••••••" onkeydown="if(event.key==='Enter')doLogin()">
+        <button class="pw-eye" type="button" onclick="eyeToggle('l-pass',this)">👁</button>
+      </div>
+    </div>
+    <button class="btn-auth" onclick="doLogin()">Sign In →</button>
+    <div class="auth-msg" id="login-msg"></div>
+  </div>
+</div>
+
+<!-- ══ APP SHELL ══ -->
+<div id="app-shell" style="display:flex">
+  <nav class="sidebar">
+    <div class="sidebar-logo">🎂 Birthday<span>Wishes</span></div>
+    <div class="sidebar-user">
+      <strong id="sb-name">—</strong>
+      <span id="sb-email" style="font-size:11px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:block;">—</span>
+    </div>
+    <a class="nav-item active" onclick="showPage('dashboard',this)" href="#"><span class="nav-icon">🏠</span><span>Dashboard</span></a>
+    <a class="nav-item" onclick="showPage('csv',this)" href="#"><span class="nav-icon">📋</span><span>CSV Manager</span></a>
+    <a class="nav-item" onclick="showPage('template',this)" href="#"><span class="nav-icon">🎨</span><span>Card Template</span></a>
+    <!--<a class="nav-item" onclick="showPage('settings',this)" href="#"><span class="nav-icon">⚙️</span><span>Settings</span></a>-->
+    <a class="nav-item" onclick="showPage('logs',this)" href="#"><span class="nav-icon">📜</span><span>Logs</span></a>
+    <div class="sidebar-bottom">
+      <button class="btn btn-secondary" style="width:100%;margin-bottom:8px;font-size:13px;" onclick="openChangePw()">🔑 Change Password</button>
+      <button class="btn-signout" onclick="doSignOut()">Sign Out</button>
+    </div>
+  </nav>
+
+  <main class="main">
+
+    <!-- DASHBOARD -->
+    <div id="page-dashboard" class="page active">
+      <div class="page-header">
+        <h1>Today's Birthdays 🎉</h1>
+        <p id="dashboard-date">Loading…</p>
+      </div>
+      <div class="stat-grid">
+        <div class="stat"><div class="stat-val" id="stat-matches">—</div><div class="stat-lbl">Matches Today</div></div>
+        <div class="stat"><div class="stat-val" id="stat-total">—</div><div class="stat-lbl">Total in CSV</div></div>
+        <div class="stat"><div class="stat-val" id="stat-skipped">—</div><div class="stat-lbl">Skipped Rows</div></div>
+      </div>
+      <div class="card">
+        <div class="card-title">
+          🎂 Birthday Matches
+          <div class="ar-badge" id="ar-badge" style="display:none">
+            <div class="ar-dot"></div> Auto-refreshing
+          </div>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>#</th><th>Name</th><th>Email</th><th>Roll No.</th><th>Preview</th></tr></thead>
+            <tbody id="matches-tbody"><tr><td colspan="5" style="color:var(--muted);text-align:center;padding:24px;">Loading…</td></tr></tbody>
+          </table>
+        </div>
+        <div class="btn-row">
+          <button class="btn btn-primary" id="btn-send" onclick="sendEmails()" disabled>Send Birthday Wishes</button>
+          <button class="btn btn-secondary" onclick="loadDashboard()">↻ Refresh</button>
+          <button class="btn btn-secondary" id="ar-toggle" onclick="toggleAutoRefresh()">⏱ Auto-Refresh: Off</button>
+          <button class="btn btn-secondary" id="btn-preview-today" onclick="openTodayPreviewModal()" style="display:none">🎴 Preview Cards</button>
+        </div>
+        <div id="send-progress" style="display:none;margin-top:16px;">
+          <div style="font-size:13px;color:var(--muted);margin-bottom:4px;" id="send-progress-text">Sending…</div>
+          <div class="progress-bar"><div class="progress-fill" id="send-progress-bar"></div></div>
+        </div>
+      </div>
+      <div class="card" id="skipped-card" style="display:none;">
+        <div class="card-title">⚠️ Skipped Rows</div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Row</th><th>Name</th><th>Email</th><th>Reason</th></tr></thead>
+            <tbody id="skipped-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- CSV MANAGER -->
+    <div id="page-csv" class="page">
+      <div class="page-header">
+        <h1>CSV Manager</h1>
+        <p>Upload your student/staff data file. Required columns: name, email, dob, rollnumber</p>
+      </div>
+      <div class="card">
+        <div class="card-title">📤 Upload CSV</div>
+        <div class="dropzone" id="dropzone"
+             onclick="document.getElementById('csv-input').click()"
+             ondragover="event.preventDefault();this.classList.add('drag-over')"
+             ondragleave="this.classList.remove('drag-over')"
+             ondrop="handleDrop(event)">
+          <div class="dz-icon">📄</div>
+          <p>Click to upload or drag &amp; drop your CSV here</p>
+          <small>Max 1 GB · Columns: name, email, dob, rollnumber</small>
+        </div>
+        <input type="file" id="csv-input" accept=".csv" style="display:none" onchange="uploadCSV(this.files[0])">
+      </div>
+      <div class="card" id="validation-card" style="display:none;">
+        <div class="card-title">✅ Validation Results</div>
+        <div class="stat-grid">
+          <div class="stat"><div class="stat-val" id="csv-valid-count" style="color:var(--green)">—</div><div class="stat-lbl">Valid Rows</div></div>
+          <div class="stat"><div class="stat-val" id="csv-error-count" style="color:var(--red)">—</div><div class="stat-lbl">Error Rows</div></div>
+        </div>
+        <div class="table-wrap" id="csv-preview-wrap"></div>
+      </div>
+    </div>
+
+    <!-- TEMPLATE -->
+    <div id="page-template" class="page">
+      <div class="page-header">
+        <h1>Card Template</h1>
+        <p>Customise the birthday card HTML. Use <code style="color:var(--accent)">{{name}}</code> where the recipient's name should appear.</p>
+      </div>
+      <div class="card">
+        <div class="card-title">🖼️ Upload Images (Logo / Signature / Photo)</div>
+        <p style="font-size:13px;color:var(--muted);margin-bottom:14px;">Upload images to get base64 data URIs you can paste into the template — no broken local paths!</p>
+        <input type="file" id="img-input" accept="image/*" onchange="uploadImage(this.files[0])" style="display:none">
+        <button class="btn btn-secondary" onclick="document.getElementById('img-input').click()">📁 Upload Image</button>
+        <div id="img-result" style="margin-top:14px;display:none;">
+          <div style="font-size:13px;color:var(--muted);margin-bottom:6px;">Copy this src value into your template:</div>
+          <textarea id="img-uri" readonly style="width:100%;padding:10px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:11px;font-family:monospace;height:70px;resize:none;"></textarea>
+          <button class="btn btn-secondary" style="margin-top:8px;" onclick="copyImgUri()">Copy</button>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">✏️ Edit HTML Template</div>
+        <textarea id="template-editor" style="width:100%;height:340px;background:var(--surface2);border:1px solid var(--border);border-radius:10px;color:var(--text);font-size:13px;font-family:'JetBrains Mono',monospace;padding:16px;resize:vertical;line-height:1.6;" placeholder="Loading template…"></textarea>
+        <div class="btn-row">
+          <button class="btn btn-primary" onclick="saveTemplate()">💾 Save Template</button>
+          <button class="btn btn-secondary" onclick="loadTemplate()">↩ Reload</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- SETTINGS -->
+    <div id="page-settings" class="page">
+      <div class="page-header">
+        <h1>Settings</h1>
+        <p>Configure your Gmail SMTP credentials and scheduler.</p>
+      </div>
+      <div class="card">
+        <div class="card-title">📧 SMTP / Email Config</div>
+        <div class="form-row">
+          <div class="form-group"><label>SMTP Server</label><input type="text" id="smtp-server" value="smtp.gmail.com"></div>
+          <div class="form-group"><label>SMTP Port</label><input type="number" id="smtp-port" value="587"></div>
+        </div>
+        <div class="form-group"><label>Sender Email</label><input type="email" id="sender-email" placeholder="yourname@gmail.com"></div>
+        <div class="form-group">
+          <label>Gmail App Password <span style="color:var(--muted);font-size:12px;text-transform:none;letter-spacing:0;font-weight:400;">(not your login password — <a href="https://myaccount.google.com/apppasswords" target="_blank" style="color:var(--accent)">generate here</a>)</span></label>
+          <input type="password" id="app-password" placeholder="••••••••••••••••" autocomplete="new-password">
+          <div id="password-set-note" style="font-size:12px;color:var(--green);margin-top:4px;display:none;">✅ App password is set</div>
+        </div>
+        <div class="btn-row"><button class="btn btn-primary" onclick="saveSettings()">Save Settings</button></div>
+      </div>
+      <div class="card">
+        <div class="card-title">⏰ Auto-Send Scheduler</div>
+        <div class="form-group">
+          <label>Auto-send enabled</label>
+          <div class="toggle-row">
+            <div class="toggle" id="auto-toggle" onclick="toggleAutoSend()"></div>
+            <span id="auto-toggle-label" style="font-size:14px;color:var(--muted)">Disabled</span>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label>Send time (24-hour)</label><input type="time" id="send-time" value="08:00"></div>
+          <div class="form-group">
+            <label>Timezone</label>
+            <select id="timezone">
+              <option value="Asia/Kolkata">Asia/Kolkata (IST)</option>
+              <option value="UTC">UTC</option>
+              <option value="America/New_York">America/New_York</option>
+              <option value="America/Los_Angeles">America/Los_Angeles</option>
+              <option value="Europe/London">Europe/London</option>
+            </select>
+          </div>
+        </div>
+        <div class="btn-row"><button class="btn btn-primary" onclick="saveSchedule()">Save Schedule</button></div>
+        <div style="margin-top:16px;padding-top:16px;border-top:1px solid var(--border);">
+          <div style="font-size:13px;color:var(--muted);">Next scheduled run</div>
+          <div style="font-size:16px;font-weight:600;color:var(--accent2);margin-top:4px;" id="next-run-label">—</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- LOGS -->
+    <div id="page-logs" class="page">
+      <div class="page-header">
+        <h1>Activity Logs</h1>
+        <p>Live view of all application events, sends, and errors.</p>
+      </div>
+      <div class="card">
+        <div class="card-title">
+          📜 App Log
+          <button class="btn btn-secondary" style="margin-left:auto;padding:4px 12px;font-size:12px;" onclick="loadLogs()">Refresh</button>
+        </div>
+        <div class="log-viewer" id="log-viewer">Loading logs…</div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<!-- ══ CARD PREVIEW MODAL ══ -->
+<div class="modal-bg" id="preview-modal">
+  <div class="modal-box">
+    <div class="modal-header">
+      <h2>🎴 Birthday Card Preview</h2>
+      <button class="modal-close" onclick="closePreviewModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <p style="font-size:13.5px;color:var(--muted);margin-bottom:16px;">
+        Select a person from today's birthday list to preview the personalised card.
+      </p>
+      <div class="preview-toolbar">
+        <select class="preview-select" id="preview-name-select" onchange="renderPreview()">
+          <option value="">— Select a person —</option>
+        </select>
+        <button class="btn btn-secondary" onclick="renderPreview()">👁 Preview</button>
+      </div>
+      <div class="preview-frame-wrap" id="preview-frame-wrap" style="display:none">
+        <div class="preview-spinner" id="preview-spinner">
+          <div class="spinner-ring"></div>
+          Rendering card…
+        </div>
+        <iframe id="preview-iframe" sandbox="allow-same-origin allow-scripts" style="display:none"></iframe>
+      </div>
+      <p style="margin-top:12px;font-size:12px;color:var(--muted)">
+        This is a live render of the current HTML template with the selected name substituted in.
+      </p>
+    </div>
+  </div>
+</div>
+
+
+<!-- ══ CHANGE PASSWORD MODAL ══ -->
+<div class="modal-bg" id="changepw-modal">
+  <div class="modal-box" style="max-width:420px">
+    <div class="modal-header">
+      <h2>🔑 Change Password</h2>
+      <button class="modal-close" onclick="closeChangePw()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="fg">
+        <label>Current Password</label>
+        <div class="inp-wrap">
+          <input type="password" id="cp-old" placeholder="Enter current password">
+          <button class="pw-eye" type="button" onclick="eyeToggle('cp-old',this)">👁</button>
+        </div>
+      </div>
+      <div class="fg">
+        <label>New Password</label>
+        <div class="inp-wrap">
+          <input type="password" id="cp-new" placeholder="Min. 8 characters" oninput="strengthCheck(this)">
+          <button class="pw-eye" type="button" onclick="eyeToggle('cp-new',this)">👁</button>
+        </div>
+        <div id="pw-bars2" style="display:none">
+          <div class="pw-bars"><div class="pw-bar" id="pb1b"></div><div class="pw-bar" id="pb2b"></div><div class="pw-bar" id="pb3b"></div><div class="pw-bar" id="pb4b"></div></div>
+          <div class="pw-hint" id="pw-hint2">Strength: —</div>
+        </div>
+      </div>
+      <div class="fg">
+        <label>Confirm New Password</label>
+        <div class="inp-wrap">
+          <input type="password" id="cp-confirm" placeholder="Repeat new password">
+        </div>
+      </div>
+      <div class="auth-msg" id="changepw-msg" style="display:none;margin-bottom:12px"></div>
+      <button class="btn-auth" onclick="doChangePw()">Update Password</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+/* ══════════════════════════════════════════════════
+   AUTH  —  single shared account, server-side session
+══════════════════════════════════════════════════ */
+let _authToken = sessionStorage.getItem('bw_token') || null;
+const saveToken   = t  => { _authToken = t; sessionStorage.setItem('bw_token', t); };
+const clearToken  = () => { _authToken = null; sessionStorage.removeItem('bw_token'); };
+const authHeaders = () => _authToken
+  ? {'Authorization':'Bearer '+_authToken,'Content-Type':'application/json'}
+  : {'Content-Type':'application/json'};
+
+/* ══ Login ══ */
+async function doLogin() {
+  const user = document.getElementById('l-user').value.trim();
+  const pass = document.getElementById('l-pass').value;
+  const btn  = document.querySelector('#auth-overlay .btn-auth');
+  btn.disabled=true; btn.textContent='Signing in…';
+  try {
+    const res  = await fetch('/api/auth/login',{
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({username:user, password:pass})
+    });
+    const data = await res.json();
+    if (!res.ok){
+      showAuthMsg('login-msg', data.error||'Incorrect username or password.','bad');
+      btn.disabled=false; btn.textContent='Sign In →'; return;
+    }
+    saveToken(data.token);
+    launchApp(data.user);
+  } catch(e){
+    showAuthMsg('login-msg','Network error: '+e.message,'bad');
+    btn.disabled=false; btn.textContent='Sign In →';
+  }
+}
+
+/* ══ Sign out ══ */
+async function doSignOut() {
+  if (_authToken) await fetch('/api/auth/logout',{method:'POST',headers:authHeaders()}).catch(()=>{});
+  clearToken(); stopAutoRefresh();
+  document.getElementById('app-shell').style.display   ='none';
+  document.getElementById('auth-overlay').style.display='flex';
+  document.getElementById('l-user').value='';
+  document.getElementById('l-pass').value='';
+  document.getElementById('login-msg').style.display='none';
+}
+
+/* ══ Launch app ══ */
+function launchApp(user) {
+  document.getElementById('auth-overlay').style.display='none';
+  document.getElementById('app-shell').style.display   ='flex';
+  document.getElementById('sb-name').textContent  = user.name  || user.username || 'BIT';
+  document.getElementById('sb-email').textContent = 'Admin Account';
+  loadDashboard(); loadTemplate(); loadSettings();
+}
+
+/* ══ Auto-login on page load ══ */
+window.addEventListener('DOMContentLoaded', async () => {
+  if (_authToken) {
+    try {
+      const res  = await fetch('/api/auth/me',{headers:authHeaders()});
+      const data = await res.json();
+      if (res.ok && data.user){ launchApp(data.user); return; }
+    } catch(e){}
+    clearToken();
+  }
+  document.getElementById('app-shell').style.display   ='none';
+  document.getElementById('auth-overlay').style.display='flex';
+});
+
+/* ══ Change Password modal ══ */
+function openChangePw(){
+  document.getElementById('cp-old').value='';
+  document.getElementById('cp-new').value='';
+  document.getElementById('cp-confirm').value='';
+  document.getElementById('changepw-msg').style.display='none';
+  document.getElementById('changepw-modal').classList.add('open');
+}
+function closeChangePw(){ document.getElementById('changepw-modal').classList.remove('open'); }
+document.addEventListener('DOMContentLoaded',()=>{
+  document.getElementById('changepw-modal').addEventListener('click',function(e){if(e.target===this)closeChangePw();});
+});
+
+async function doChangePw(){
+  const oldPw  = document.getElementById('cp-old').value;
+  const newPw  = document.getElementById('cp-new').value;
+  const confirm= document.getElementById('cp-confirm').value;
+  const msgEl  = document.getElementById('changepw-msg');
+  const showMsg= (txt,type)=>{msgEl.textContent=txt;msgEl.className='auth-msg '+(type==='ok'?'ok':'bad');msgEl.style.display='block';};
+  if (!oldPw)           return showMsg('Enter your current password.','bad');
+  if (newPw.length < 8) return showMsg('New password must be at least 8 characters.','bad');
+  if (newPw !== confirm) return showMsg('New passwords do not match.','bad');
+  const btn = document.querySelector('#changepw-modal .btn-auth');
+  btn.disabled=true; btn.textContent='Updating…';
+  try{
+    const res  = await fetch('/api/auth/change-password',{
+      method:'POST', headers:authHeaders(),
+      body: JSON.stringify({old_password:oldPw, new_password:newPw})
+    });
+    const data = await res.json();
+    if (!res.ok){ showMsg(data.error||'Failed.','bad'); btn.disabled=false; btn.textContent='Update Password'; return; }
+    showMsg('✅ Password updated successfully!','ok');
+    setTimeout(closeChangePw, 1500);
+  } catch(e){ showMsg('Network error: '+e.message,'bad'); }
+  btn.disabled=false; btn.textContent='Update Password';
+}
+
+/* ══ Inline validators (kept for Change PW strength meter) ══ */
+function liveValidate(el, type) {
+  let valid = false;
+  if (type==='email')   valid = /^[^\s@]+@[^\s@]+\.[a-zA-Z]{2,}$/.test(el.value.trim());
+  if (type==='name')    valid = el.value.trim().length >= 2;
+  el.classList.toggle('ok',  valid);
+  el.classList.toggle('err', !valid && el.value.length>0);
+}
+function strengthCheck(el) {
+  const barWrap = document.getElementById('pw-bars2') || document.getElementById('pw-bars');
+  const hintEl  = document.getElementById('pw-hint2')  || document.getElementById('pw-hint');
+  const b1 = document.getElementById('pb1b') || document.getElementById('pb1');
+  const b2 = document.getElementById('pb2b') || document.getElementById('pb2');
+  const b3 = document.getElementById('pb3b') || document.getElementById('pb3');
+  const b4 = document.getElementById('pb4b') || document.getElementById('pb4');
+  const v = el.value;
+  if (barWrap) barWrap.style.display = v.length ? 'block' : 'none';
+  let s = 0;
+  if (v.length>=8)             s++;
+  if (/[A-Z]/.test(v))         s++;
+  if (/[0-9]/.test(v))         s++;
+  if (/[^A-Za-z0-9]/.test(v)) s++;
+  const cls = s<=1?'w':s<=2?'m':'s';
+  [b1,b2,b3,b4].forEach((b,i)=>{ if(b) b.className='pw-bar'+(i<s?' '+cls:''); });
+  if (hintEl) hintEl.textContent='Strength: '+['','Weak','Fair','Good','Strong'][s];
+}
+function validateAppPw(el) {
+  const ok = el.value.replace(/\s/g,'').length===16;
+  el.classList.toggle('ok',  ok);
+  el.classList.toggle('err', !ok && el.value.length>0);
+}
+function eyeToggle(id, btn) {
+  const el = document.getElementById(id);
+  el.type = el.type==='password' ? 'text' : 'password';
+  btn.textContent = el.type==='password' ? '👁' : '👁';
+}
+function showAuthMsg(id, msg, type) {
+  const el = document.getElementById(id);
+  el.textContent = msg;
+  el.className   = 'auth-msg ' + (type==='ok'?'ok':'bad');
+  el.style.display = 'block';
+}
+
+/* ══════════════════════════════════════════════════
+   NAVIGATION
+══════════════════════════════════════════════════ */
+function showPage(id, el) {
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  document.getElementById('page-'+id).classList.add('active');
+  if (el) el.classList.add('active');
+  if (id==='dashboard') loadDashboard();
+  if (id==='template')  loadTemplate();
+  if (id==='settings')  loadSettings();
+  if (id==='logs')      loadLogs();
+}
+
+/* ══════════════════════════════════════════════════
+   TOAST
+══════════════════════════════════════════════════ */
+function toast(msg, type='info') {
+  const el=document.getElementById('toast');
+  el.textContent=msg; el.className='show '+type;
+  clearTimeout(el._t);
+  el._t=setTimeout(()=>el.classList.remove('show'), 3500);
+}
+
+/* ══════════════════════════════════════════════════
+   AUTO-REFRESH
+══════════════════════════════════════════════════ */
+let _arInterval=null, _arOn=false;
+function toggleAutoRefresh(){_arOn?stopAutoRefresh():startAutoRefresh();}
+function startAutoRefresh(){
+  _arOn=true;
+  _arInterval=setInterval(loadDashboard, 30000);
+  document.getElementById('ar-toggle').textContent='⏱ Auto-Refresh: On';
+  document.getElementById('ar-toggle').style.color='var(--green)';
+  document.getElementById('ar-badge').style.display='';
+  toast('Auto-refresh enabled (every 30s)','success');
+}
+function stopAutoRefresh(){
+  _arOn=false; clearInterval(_arInterval);
+  document.getElementById('ar-toggle').textContent='⏱ Auto-Refresh: Off';
+  document.getElementById('ar-toggle').style.color='';
+  document.getElementById('ar-badge').style.display='none';
+}
+
+/* ══════════════════════════════════════════════════
+   DASHBOARD
+══════════════════════════════════════════════════ */
+let _todayMatches=[];
+
+async function loadDashboard() {
+  document.getElementById('dashboard-date').textContent =
+    new Date().toLocaleDateString('en-IN',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+  try {
+    const res =await fetch('/api/matches');
+    const data=await res.json();
+    if (!res.ok){toast(data.error,'error');return;}
+    _todayMatches=data.matches||[];
+    document.getElementById('stat-matches').textContent=data.matches.length;
+    document.getElementById('stat-total').textContent  =data.total_rows;
+    document.getElementById('stat-skipped').textContent=data.skipped.length;
+    const tbody=document.getElementById('matches-tbody');
+    const previewBtn=document.getElementById('btn-preview-today');
+    if (data.matches.length===0) {
+      tbody.innerHTML=`<tr><td colspan="5" style="color:var(--muted);text-align:center;padding:24px;">🎉 No birthdays today</td></tr>`;
+      document.getElementById('btn-send').disabled=true;
+      previewBtn.style.display='none';
+    } else {
+      tbody.innerHTML=data.matches.map((m,i)=>`
+        <tr>
+          <td>${i+1}</td>
+          <td><strong>${esc(m.name)}</strong></td>
+          <td>${esc(m.email)}</td>
+          <td><span class="badge badge-gray">${esc(m.rollnumber||'—')}</span></td>
+          <td><span class="preview-chip" onclick="openPreviewForName('${esc(m.name)}')">🎴 Preview</span></td>
+        </tr>`).join('');
+      document.getElementById('btn-send').disabled=false;
+      previewBtn.style.display='';
+    }
+    populatePreviewDropdown(data.matches);
+    const skippedCard=document.getElementById('skipped-card');
+    if (data.skipped.length>0) {
+      skippedCard.style.display='';
+      document.getElementById('skipped-tbody').innerHTML=data.skipped.map(s=>`
+        <tr>
+          <td>${s.rownum}</td><td>${esc(s.name||'—')}</td>
+          <td>${esc(s.email||'—')}</td>
+          <td><span class="badge badge-red">${esc(s.reason)}</span></td>
+        </tr>`).join('');
+    } else { skippedCard.style.display='none'; }
+  } catch(e){ toast('Failed to load dashboard: '+e.message,'error'); }
+}
+
+/* ══════════════════════════════════════════════════
+   SEND EMAILS
+══════════════════════════════════════════════════ */
+async function sendEmails() {
+  if (!confirm("Send birthday emails to all today's matches?")) return;
+  const btn=document.getElementById('btn-send');
+  btn.disabled=true; btn.textContent='Sending…';
+  const prog=document.getElementById('send-progress');
+  const bar =document.getElementById('send-progress-bar');
+  const txt =document.getElementById('send-progress-text');
+  prog.style.display='';
+  try {
+    const res =await fetch('/api/send',{method:'POST'});
+    const data=await res.json();
+    if (!res.ok){toast(data.error,'error');btn.disabled=false;btn.textContent='Send Birthday Wishes';return;}
+    toast(data.message,'info');
+    pollSendStatus(data.total,btn,bar,txt,prog);
+  } catch(e){toast('Send failed: '+e.message,'error');btn.disabled=false;btn.textContent='Send Birthday Wishes';}
+}
+function pollSendStatus(total,btn,bar,txt,wrap){
+  const iv=setInterval(async()=>{
+    try{
+      const res =await fetch('/api/send/status');
+      const data=await res.json();
+      const pct=total>0?Math.round((data.progress/total)*100):0;
+      bar.style.width=pct+'%';
+      txt.textContent=`Sending… ${data.progress} / ${total} (${pct}%)`;
+      if (!data.running){
+        clearInterval(iv);
+        const sent  =(data.results||[]).filter(r=>r.status==='sent').length;
+        const failed=(data.results||[]).filter(r=>r.status==='failed').length;
+        txt.textContent=`Done — ${sent} sent, ${failed} failed.`;
+        bar.style.width='100%';
+        btn.disabled=false; btn.textContent='Send Birthday Wishes';
+        toast(`✅ ${sent} sent${failed?', ❌ '+failed+' failed':''}`,failed?'error':'success');
+      }
+    } catch{clearInterval(iv);}
+  }, 1500);
+}
+
+/* ══════════════════════════════════════════════════
+   CARD PREVIEW MODAL
+══════════════════════════════════════════════════ */
+function populatePreviewDropdown(matches) {
+  const sel=document.getElementById('preview-name-select');
+  if (!matches||matches.length===0){sel.innerHTML='<option value="">— No birthdays today —</option>';return;}
+  sel.innerHTML='<option value="">— Select a person —</option>'+
+    matches.map(m=>`<option value="${esc(m.name)}">${esc(m.name)} ${m.rollnumber?'('+esc(m.rollnumber)+')':''} · ${esc(m.email)}</option>`).join('');
+}
+function openTodayPreviewModal(){
+  document.getElementById('preview-modal').classList.add('open');
+  document.getElementById('preview-frame-wrap').style.display='none';
+  document.getElementById('preview-name-select').value='';
+}
+function openPreviewForName(name){
+  document.getElementById('preview-modal').classList.add('open');
+  const sel=document.getElementById('preview-name-select');
+  for (let opt of sel.options){ if(opt.value===name){sel.value=name;break;} }
+  renderPreview();
+}
+function closePreviewModal(){document.getElementById('preview-modal').classList.remove('open');}
+document.getElementById('preview-modal').addEventListener('click',function(e){if(e.target===this)closePreviewModal();});
+
+async function renderPreview() {
+  const name=document.getElementById('preview-name-select').value;
+  if (!name){document.getElementById('preview-frame-wrap').style.display='none';return;}
+  const frameWrap=document.getElementById('preview-frame-wrap');
+  const spinner  =document.getElementById('preview-spinner');
+  const iframe   =document.getElementById('preview-iframe');
+  frameWrap.style.display=''; spinner.style.display='flex'; iframe.style.display='none';
+  try{
+    const res =await fetch('/api/template');
+    const data=await res.json();
+    if (!res.ok||!data.html){toast('No template found. Save a template first.','error');frameWrap.style.display='none';return;}
+    const rendered=data.html.replace(/\{\{name\}\}/g, name);
+    const doc=iframe.contentDocument||iframe.contentWindow.document;
+    doc.open(); doc.write(rendered); doc.close();
+    setTimeout(()=>{
+      spinner.style.display='none';
+      iframe.style.display='block';
+      // Scale iframe content to fit the container with no scrollbars
+      try {
+        const iDoc   = iframe.contentDocument || iframe.contentWindow.document;
+        const body   = iDoc.body;
+        const html   = iDoc.documentElement;
+        // Get the full natural height of the rendered card
+        const contentH = Math.max(
+          body.scrollHeight, body.offsetHeight,
+          html.scrollHeight, html.offsetHeight
+        );
+        const contentW = Math.max(body.scrollWidth, body.offsetWidth, html.scrollWidth, html.offsetWidth);
+        const wrapW  = frameWrap.clientWidth;
+        const wrapH  = frameWrap.clientHeight;
+        // Scale to fit width; if it still overflows height, scale down further
+        let scale = wrapW / contentW;
+        if (contentH * scale > wrapH) scale = wrapH / contentH;
+        scale = Math.min(scale, 1); // never upscale
+        iframe.style.width  = (wrapW / scale) + 'px';
+        iframe.style.height = (wrapH / scale) + 'px';
+        iframe.style.transform = 'scale(' + scale + ')';
+        iframe.style.transformOrigin = 'top left';
+        // Disable scroll inside iframe
+        body.style.overflow = 'hidden';
+        html.style.overflow = 'hidden';
+      } catch(se){ /* cross-origin guard */ }
+    }, 500);
+  } catch(e){toast('Preview failed: '+e.message,'error');frameWrap.style.display='none';}
+}
+
+/* ══════════════════════════════════════════════════
+   CSV
+══════════════════════════════════════════════════ */
+function handleDrop(e){
+  e.preventDefault();
+  document.getElementById('dropzone').classList.remove('drag-over');
+  const file=e.dataTransfer.files[0]; if(file)uploadCSV(file);
+}
+async function uploadCSV(file){
+  if(!file)return;
+  const fd=new FormData(); fd.append('file',file);
+  toast('Uploading…','info');
+  try{
+    const res =await fetch('/api/csv/upload',{method:'POST',body:fd});
+    const data=await res.json();
+    if(!res.ok){toast(data.error,'error');return;}
+    toast('CSV uploaded! '+data.validation.valid.length+' valid rows.','success');
+    showValidation(data.validation);
+  } catch(e){toast('Upload failed: '+e.message,'error');}
+}
+function showValidation(v){
+  const card=document.getElementById('validation-card');
+  card.style.display='';
+  document.getElementById('csv-valid-count').textContent=v.valid.length;
+  document.getElementById('csv-error-count').textContent=v.errors.length;
+  let html=`<table><thead><tr><th>Row</th><th>Name</th><th>Email</th><th>DOB</th><th>Status</th></tr></thead><tbody>`;
+  v.valid.forEach(r=>{html+=`<tr><td>${r.rownum}</td><td>${esc(r.name)}</td><td>${esc(r.email)}</td><td>${esc(r.dob)}</td><td><span class="badge badge-green">✓ Valid</span></td></tr>`;});
+  v.errors.forEach(r=>{html+=`<tr><td>${r.rownum}</td><td>${esc(r.name||'—')}</td><td>${esc(r.email||'—')}</td><td>—</td><td><span class="badge badge-red">${esc(r.reason)}</span></td></tr>`;});
+  html+='</tbody></table>';
+  document.getElementById('csv-preview-wrap').innerHTML=html;
+}
+
+/* ══════════════════════════════════════════════════
+   TEMPLATE
+══════════════════════════════════════════════════ */
+async function loadTemplate(){
+  const res=await fetch('/api/template'); const data=await res.json();
+  document.getElementById('template-editor').value=data.html||'';
+}
+async function saveTemplate(){
+  const html=document.getElementById('template-editor').value;
+  const res=await fetch('/api/template',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({html})});
+  const data=await res.json();
+  toast(res.ok?data.message:data.error,res.ok?'success':'error');
+}
+async function uploadImage(file){
+  if(!file)return;
+  const fd=new FormData(); fd.append('file',file);
+  const res=await fetch('/api/template/upload-image',{method:'POST',body:fd});
+  const data=await res.json();
+  if(res.ok){document.getElementById('img-uri').value=data.data_uri;document.getElementById('img-result').style.display='';toast('Image ready — copy the src value below.','success');}
+  else toast(data.error,'error');
+}
+function copyImgUri(){const el=document.getElementById('img-uri');el.select();document.execCommand('copy');toast('Copied to clipboard!','success');}
+
+/* ══════════════════════════════════════════════════
+   SETTINGS & SCHEDULER
+══════════════════════════════════════════════════ */
+async function loadSettings(){
+  const res=await fetch('/api/settings'); const data=await res.json();
+  document.getElementById('smtp-server').value  =data.smtp_server  ||'smtp.gmail.com';
+  document.getElementById('smtp-port').value    =data.smtp_port    ||587;
+  document.getElementById('sender-email').value =data.sender_email ||'';
+  document.getElementById('send-time').value    =data.send_time    ||'08:00';
+  document.getElementById('timezone').value     =data.timezone     ||'Asia/Kolkata';
+  document.getElementById('password-set-note').style.display=data.password_set?'':'none';
+  document.getElementById('next-run-label').textContent=data.next_run||'Not scheduled';
+  _autoSend=!!data.auto_send; updateToggleUI();
+}
+async function saveSettings(){
+  const payload={smtp_server:document.getElementById('smtp-server').value,smtp_port:parseInt(document.getElementById('smtp-port').value),sender_email:document.getElementById('sender-email').value};
+  const pw=document.getElementById('app-password').value; if(pw)payload.app_password=pw;
+  const res=await fetch('/api/settings',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
+  const data=await res.json();
+  toast(res.ok?'✅ Settings saved.':data.error,res.ok?'success':'error');
+  if(res.ok)loadSettings();
+}
+let _autoSend=false;
+function toggleAutoSend(){_autoSend=!_autoSend;updateToggleUI();}
+function updateToggleUI(){
+  document.getElementById('auto-toggle').classList.toggle('on',_autoSend);
+  const lb=document.getElementById('auto-toggle-label');
+  lb.textContent=_autoSend?'Enabled — emails will send automatically':'Disabled';
+  lb.style.color=_autoSend?'var(--green)':'var(--muted)';
+}
+async function saveSchedule(){
+  const payload={send_time:document.getElementById('send-time').value,timezone:document.getElementById('timezone').value,auto_send:_autoSend};
+  const res=await fetch('/api/settings',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
+  const data=await res.json();
+  toast(res.ok?'✅ Schedule saved.':data.error,res.ok?'success':'error');
+  if(res.ok)document.getElementById('next-run-label').textContent=data.next_run||'Not scheduled';
+}
+
+/* ══════════════════════════════════════════════════
+   LOGS
+══════════════════════════════════════════════════ */
+async function loadLogs(){
+  const res=await fetch('/api/logs?lines=150'); const data=await res.json();
+  const viewer=document.getElementById('log-viewer');
+  viewer.innerHTML=(data.lines||[]).map(l=>{
+    let cls='';
+    if(l.includes('[SENT]'))   cls='log-sent';
+    else if(l.includes('ERROR')||l.includes('[FAIL]')) cls='log-err';
+    else if(l.includes('WARNING')||l.includes('[SKIP]')) cls='log-warn';
+    else if(l.includes('INFO')) cls='log-info';
+    return `<div class="${cls}">${escHtml(l)}</div>`;
+  }).join('')||'<div style="color:var(--muted)">No log entries yet.</div>';
+  viewer.scrollTop=viewer.scrollHeight;
+}
+
+/* ══ Utils ══ */
+function escHtml(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#x27;');}
+</script>
+</body>
+</html>

@@ -61,8 +61,8 @@ def _render_card(name: str, rollnumber: str, template_html: str):
 
     try:
         with sync_playwright() as p:
-            browser = await p.chromium.launch(headless=True,
-    args=["--no-sandbox", "--disable-dev-shm-usage"])
+            browser = p.chromium.launch(headless=True,
+    args=["--no-sandbox", "--disable-dev-shm-usage","--disable-gpu"])
             ctx = browser.new_context(
                 viewport={"width": 1000, "height": 600},
                 device_scale_factor=2,

@@ -5,6 +5,6 @@ google-api-python-client
 google-auth
 google-auth-oauthlib
 google-auth-httplib2
-playwright>=1.40
+playwright
 apscheduler>=3.10
 werkzeug>=3.0

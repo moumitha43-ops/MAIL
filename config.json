@@ -1,0 +1,11 @@
+{
+  "smtp_server": "smtp.gmail.com",
+  "smtp_port": 587,
+  "sender_email": "wmoumitha2007@gmail.com",
+  "app_password": "vcuu etpy vsmb lfmq",
+  "send_time": "08:00",
+  "timezone": "Asia/Kolkata",
+  "auto_send": false,
+  "csv_path": "C:\\Users\\W MOUMITHA\\Downloads\\birthday_wishes\\birthday_wishes_project\\uploads\\data.csv"
+
+}
